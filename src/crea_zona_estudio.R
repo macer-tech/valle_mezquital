@@ -24,11 +24,14 @@ zona_estudio_muni <- municipios |> filter(
                 "Tlaxcoapan", "Tlahuelilpan", "Atitalaquia", "Atotonilco de Tula",
                 "Tepetitlán", "Tula de Allende", "Tepeji del Río de Ocampo"))
 
+# zona_estudio_muni <- zona_estudio_muni |>
+#   st_make_valid()
+
 zona_estudio_agregado <- zona_estudio_muni |>
   st_union()
 
-# ggplot() +
-#   geom_sf(data = municipios)
+ggplot() +
+  geom_sf(data = zona_estudio_agregado)
 
 zona_estudio_agregado |>
   st_write(dsn = "./resultados/zona_estudio.geojson",
@@ -37,7 +40,7 @@ zona_estudio_agregado |>
 map_type <- "streets"
 set_defaults(map_service = "osm",
              map_type = map_type, 
-             map_res = 300)
+             map_res = 0.5)
 
 bbox <- muni_hidalgo |>
   st_transform(crs = 3857) |>
@@ -47,14 +50,19 @@ ggplot() +
   basemap_gglayer(
     st_transform(muni_hidalgo |>
                    st_buffer(20000),
-                 crs = 3857)) +
-  scale_fill_identity() +
+                 crs = 3857))+ 
   geom_sf(data = muni_hidalgo |> st_transform(crs = 3857),
-          aes(fill = "grey")) +
+          fill = "grey", alpha = 0.5, colour = "black") +
   geom_sf(data = zona_estudio |> st_transform(crs = 3857),
-          aes(fill = "#478f48")) +
+          fill = "#478f48", alpha = 0.5, colour = "black") +
   coord_sf(xlim = c(bbox$xmin, bbox$xmax),
            ylim = c(bbox$ymin, bbox$ymax)) +
+  scale_fill_identity(
+    guide = "legend",       # Forces the legend to appear
+    name = "Birth Rate",    # Legend Title
+    breaks = c("#E41A1C", "#377EB8"), # The exact values in your dataframe
+    labels = c("High (>20k)", "Low (<=20k)") # Custom Legend Labels
+  ) +
   labs(title = "Valle del mezquital",
        subtitle = "Hidalgo",
        caption = "Proyecto Hñäki, elaboración propia",
@@ -73,4 +81,6 @@ ggplot() +
     legend.box.just = "right",
     legend.margin = margin(6, 6, 6, 6))
 
-  
+p_zona_estudio |>
+  ggsave(device = "png", file = "./resultados/img/zona_de_estudio.png",
+         width=17, height=9, dpi = 300)
